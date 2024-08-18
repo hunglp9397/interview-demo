@@ -8,5 +8,5 @@
 
 ### Chi tiết luồng 3 : index elasticsearch, Cơ chế handle fallback khi service elasticsearch lỗi:
 
- - ![img.png](img.png)
- - ![img_1.png](img_1.png)
+ - ![img.png](src/img.png)
+ - ![img_1.png](src/img_1.png)
