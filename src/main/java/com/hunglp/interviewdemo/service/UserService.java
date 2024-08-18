@@ -1,5 +1,6 @@
 package com.hunglp.interviewdemo.service;
 
+import com.hunglp.interviewdemo.dto.UserDto;
 import com.hunglp.interviewdemo.repository.UserRepository;
 import com.hunglp.interviewdemo.entity.User;
 import com.hunglp.interviewdemo.util.BatchUtils;
@@ -11,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -31,6 +33,9 @@ public class UserService {
 
     @Autowired
     private BatchUserService batchUserService;
+
+    @Autowired
+    private SolrService solrService;
 
 
     public List<User> saveUsers(MultipartFile []files) throws Exception{
@@ -55,8 +60,8 @@ public class UserService {
 //      // Lưu vào DB theo batch
         allUsers = processAndSaveUsers(allUsers, 1000);
 
-        // index vào Elasticsearch
-       elasticSearchService.indexUsers(allUsers);
+//        // index vào Elasticsearch
+//       elasticSearchService.indexUsers(allUsers);
 
         logger.info("Saved user, size:{}", allUsers.size() );
         return allUsers;
@@ -90,5 +95,63 @@ public class UserService {
         long end = System.currentTimeMillis();
         logger.info("Total time {}", (end - start));
         return users;
+    }
+
+    public List<UserDto> syncToSolrAndElasticsearch() {
+        List<User> users = userRepository.findAll();
+
+
+        List<List<User>> batches = BatchUtils.partitionList(users, 500); // Chia nhỏ thành các batch
+
+        System.out.println("Total:" + users.size() + " | Batch: 500");
+
+        // Xử lý các batch đồng thời
+        List<CompletableFuture<List<User>>> solrFutures = new ArrayList<>();
+        List<CompletableFuture<List<User>>> elasticFutures = new ArrayList<>();
+
+        for (List<User> batch : batches) {
+            // Tạo CompletableFuture cho Solr
+            CompletableFuture<List<User>> solrFuture = solrService.saveToSolr(batch);
+            solrFutures.add(solrFuture);
+
+            // Tạo CompletableFuture cho Elasticsearch
+            CompletableFuture<List<User>> elasticFuture = elasticSearchService.indexUsers(batch)
+                    .thenApply(indexedUsers -> {
+                        return indexedUsers;
+                    });
+            elasticFutures.add(elasticFuture);
+        }
+
+        // Chờ tất cả các batch hoàn thành cho Solr
+        CompletableFuture.allOf(solrFutures.toArray(new CompletableFuture[0])).join();
+
+        // Chờ tất cả các batch hoàn thành cho Elasticsearch (không ảnh hưởng đến kết quả trả về)
+        CompletableFuture.allOf(elasticFutures.toArray(new CompletableFuture[0])).join();
+
+        // Thu thập kết quả từ Solr
+        List<User> indexedUsersInSolr = solrFutures.stream()
+                .map(CompletableFuture::join)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+        logger.info("Indexed Solr! size: {}",indexedUsersInSolr.size());
+
+
+        // Thu thập kết quả index từ Elasticsearch
+        List<User> indexedUsersInElasticsearch= elasticFutures.stream()
+                .map(CompletableFuture::join)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+        logger.info("Indexed Elasticsearch! size: {}",indexedUsersInElasticsearch.size());
+
+        // Chuyển đổi từ User sang UserDto
+        List<UserDto> userDtos = indexedUsersInSolr.stream()
+                .map(user -> {
+                    UserDto userDto = new UserDto(user);
+                    userDto.setIndexed(1);
+                    return userDto;
+                })
+                .collect(Collectors.toList());
+
+        return userDtos;
     }
 }

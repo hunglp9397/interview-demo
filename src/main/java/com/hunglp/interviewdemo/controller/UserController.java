@@ -1,6 +1,7 @@
 package com.hunglp.interviewdemo.controller;
 
 import com.hunglp.interviewdemo.dto.MyResponse;
+import com.hunglp.interviewdemo.dto.UserDto;
 import com.hunglp.interviewdemo.entity.User;
 import com.hunglp.interviewdemo.service.ExcelService;
 import com.hunglp.interviewdemo.service.UserService;
@@ -34,6 +35,16 @@ public class UserController {
         Map<String, Object> data = new HashMap<>();
         data.put("users", users);
         MyResponse response = new MyResponse(HttpStatus.CREATED.toString(), HttpStatus.CREATED.value(), data);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/users/sync-to-solr-and-es")
+    public ResponseEntity<MyResponse> syncToSolrAndElasticsearch() {
+        List<UserDto> userDtos = userService.syncToSolrAndElasticsearch();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("users", userDtos);
+        MyResponse response = new MyResponse(HttpStatus.OK.toString(), HttpStatus.OK.value(), data );
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

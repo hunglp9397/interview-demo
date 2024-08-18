@@ -25,7 +25,7 @@ public class ElasticSearchService {
             System.out.println("Indexing batch in Elasticsearch with thread: " + Thread.currentThread().getName());
 
             // elasticsearchTemplate.save(users);
-            logger.info("Indexed user, size:{}", users.size());
+//            logger.info("Indexed user, size:{}", users.size());
             return CompletableFuture.completedFuture(new ArrayList<>(users));
         } catch (Exception e) {
             logger.error("Error indexing users: {}", e.getMessage());

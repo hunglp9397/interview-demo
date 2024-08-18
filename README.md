@@ -10,3 +10,13 @@
 
  - ![img.png](src/img.png)
  - ![img_1.png](src/img_1.png)
+
+# Test
+1. Import data
+ - ![img.png](img.png)
+ - Output:
+ - ![img_1.png](img_1.png)
+
+2. Index solr, elasticsearch
+ - Output:
+ - ![img_2.png](img_2.png)
