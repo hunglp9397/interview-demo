@@ -25,7 +25,7 @@ public class ExcelService {
 
     @Async("taskExecutor")
     public CompletableFuture<List<User>> processFile(MultipartFile file) {
-
+        System.out.println("Reading file: " + file.getOriginalFilename());
         List<User> users = new ArrayList<>();
         try {
             try (final BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
