@@ -47,25 +47,4 @@ public class UserController {
         MyResponse response = new MyResponse(HttpStatus.OK.toString(), HttpStatus.OK.value(), data );
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-
-    @GetMapping(value = "/users", produces = "application/json")
-    public ResponseEntity<MyResponse> findAllUsers() {
-
-        List<User> users = userService.findAllUsers();
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("users", users);
-        MyResponse response = new MyResponse(HttpStatus.OK.toString(), HttpStatus.OK.value(), data );
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-
-//    @GetMapping(value = "/getUsersByThread", produces = "application/json")
-//    public  ResponseEntity getUsers(){
-//        CompletableFuture<List<User>> users1=service.findAllUsers();
-//        CompletableFuture<List<User>> users2=service.findAllUsers();
-//        CompletableFuture<List<User>> users3=service.findAllUsers();
-//        CompletableFuture.allOf(users1,users2,users3).join();
-//        return  ResponseEntity.status(HttpStatus.OK).build();
-//    }
 }
