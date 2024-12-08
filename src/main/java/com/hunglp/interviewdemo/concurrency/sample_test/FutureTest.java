@@ -16,7 +16,6 @@ import java.util.stream.IntStream;
 public class FutureTest {
 
     public static int calculateSumFromRange(int startRange, int endRange){
-
         int sum = 0;
         for(int i = startRange; i < endRange; i++){
             System.out.println(Thread.currentThread() + " index : " + i);
@@ -54,14 +53,13 @@ public class FutureTest {
             }
 
             System.out.println("Sum: " + totalSum);
-
-            long end = System.currentTimeMillis();
-            System.out.println("Total time execute: " + (end - start));
-
         } catch (Exception e) {
+            System.out.println("Error while running task!" +  e.getMessage());
             e.printStackTrace();
         } finally {
             executorService.shutdown(); // Đảm bảo thread pool được shutdown sau khi xong
+            long end = System.currentTimeMillis();
+            System.out.println("Total time execute: " + (end - start));
         }
     }
 }
