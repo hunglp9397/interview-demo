@@ -1,20 +1,19 @@
 package com.hunglp.interviewdemo.concurrency.sample_test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hunglp.interviewdemo.entity.Employee;
 import com.hunglp.interviewdemo.repository.EmployeeRepository;
 
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class CompletableFutureTest {
+public class CompletableFutureTest<I extends Number> {
 
     static int numThreads = Runtime.getRuntime().availableProcessors();
 
-    // CASE 1
+    // CASE 1 : Tính tổng các số từ 1 đến 100: Chia thành nhiều batch giao cho nhiều luồng xử lí
     public static void testCase1() {
         long start = System.currentTimeMillis();
         // Lấy số thread có sẵn trong hệ thống
@@ -51,8 +50,7 @@ public class CompletableFutureTest {
         System.out.println("Total time execute: " + (end - start));
     }
 
-
-    // CASE 2
+    // CASE 2: Combine 2 future
     public static void testCase2() {
         long start = System.currentTimeMillis();
         System.out.println("Total thread: " + numThreads);
@@ -82,8 +80,64 @@ public class CompletableFutureTest {
         }
     }
 
+    // CASE 3 : Combine các future liên quan đến nhau
+    public static void testCase3() throws ExecutionException, InterruptedException {
+
+        // Combine dependent future :  Get rating of detail employee
+        CompletableFuture<Integer> thenComposeResult =  getEmployeeDetail("79-021-3776").thenCompose(employee -> getRatings(employee));
+        System.out.println("Ratings: "+ thenComposeResult.get());
+
+        // Summary :
+        // Dùng CompletableFuture : getEmployeeDetail() và getRatings() chạy ở hai luồng khác nhau
+        // Dùng Stream:  toàn bộ thao tác sẽ chạy tuần tự trên luồng chính, điều này có thể gây ra "blocking".
+    }
+
+
+    // CASE 4 : Combine các future ko liên quan
+    public static void testCase4() throws ExecutionException, InterruptedException {
+        // Map Gender:Count
+        CompletableFuture<Map<String,Long>> mapCompletableFuture = CompletableFuture.supplyAsync( () ->{
+            System.out.println("Get Map<Gender:Count> " + Thread.currentThread());
+            return EmployeeRepository.fetchEmployees().stream().collect(Collectors.groupingBy(Employee::getGender, Collectors.counting()));
+        });
+
+
+        // Get email
+        CompletableFuture<List<String>> mailFuture = CompletableFuture.supplyAsync( () -> {
+            System.out.println("Get email" + Thread.currentThread());
+            return EmployeeRepository.fetchEmployees().stream().map(Employee::getEmail).collect(Collectors.toList());
+        });
+
+        //Combine 2 future
+        CompletableFuture<String> combineResults = mapCompletableFuture.thenCombine(mailFuture, (empMap, emails) -> {
+            System.out.println("Combine Map and Email Future ");
+            return empMap + " " + emails;
+        });
+
+        System.out.println(combineResults.get());
+
+
+
+
+    }
+
+    public static CompletableFuture<Employee> getEmployeeDetail(String empId){
+        return CompletableFuture.supplyAsync(() -> {
+            System.out.println("Get details" + Thread.currentThread());
+           return  EmployeeRepository.fetchEmployees().stream().filter(emp -> empId.equals(emp.getEmployeeId())).findAny().orElse(null);
+        });
+    }
+
+    public static CompletableFuture<Integer> getRatings(Employee employee){
+        return CompletableFuture.supplyAsync( () -> {
+            System.out.println("Get ratings" + Thread.currentThread());
+            return employee.getRating();
+        });
+    }
+
+
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        testCase2();
+        testCase4();
     }
 
 
