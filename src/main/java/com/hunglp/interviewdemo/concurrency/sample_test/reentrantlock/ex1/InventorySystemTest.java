@@ -13,7 +13,7 @@ public class InventorySystemTest {
     public void decrementStock(){
         lock.lock();
         try {
-            System.out.println(Thread.currentThread().getName() + "_" + itemInStock);
+            System.out.println(Thread.currentThread().getName() + "| Inventory : " + itemInStock);
             if (itemInStock > 0) {
                 itemInStock--;
             } else {
@@ -30,6 +30,7 @@ public class InventorySystemTest {
         InventorySystemTest inventorySystemTest = new InventorySystemTest();
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
+        // Giả sử có 2 thao tác của người dùng: Bấm chọn mua nhưng chưa thực hiện thanh toán
         for(int i = 0; i < 20; i++){
             executorService.submit( () -> inventorySystemTest.decrementStock());
         }
