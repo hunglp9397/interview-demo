@@ -35,6 +35,12 @@
 <!--            <artifactId>resilience4j-spring-boot2</artifactId>-->
 <!--            <version>1.7.1</version>-->
 <!--        </dependency>-->
+        <!-- https://mvnrepository.com/artifact/redis.clients/jedis -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>5.2.0</version>
+        </dependency>
 
         <dependency>
             <groupId>io.github.resilience4j</groupId>
